@@ -175,7 +175,7 @@
                 💾 Simpan Draft
             </button>
             <button type="submit" name="status" value="selesai" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors">
-                ✉️ Kirim ke Direktur
+                ✉️ Kirim ke HRD
             </button>
         </div>
     </form>

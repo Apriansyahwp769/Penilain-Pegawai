@@ -3,10 +3,10 @@
     <div class="p-4 lg:p-6 border-b border-gray-200">
         <div class="flex items-center space-x-3">
             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">PK</span>
+                <span class="text-white font-bold text-sm">PM</span>
             </div>
             <div class="flex-1">
-                <h1 class="text-lg font-semibold text-gray-900">Performance App</h1>
+                <h1 class="text-lg font-semibold text-gray-900">PETRO Muba</h1>
                 <p class="text-sm text-gray-500 hidden lg:block">Admin Panel</p>
             </div>
             <!-- Close Button Mobile -->
@@ -27,11 +27,11 @@
                 </a>
             </li>
 
-            <!-- Siklus -->
+            <!-- Periode -->
             <li>
                 <a href="{{ route('admin.siklus.index') }}" class="flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors text-sm lg:text-base {{ request()->routeIs('admin.siklus.*') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-gray-700 hover:bg-gray-50' }}">
                     <i data-lucide="calendar-range" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="font-medium">Siklus</span>
+                    <span class="font-medium">Periode</span>
                 </a>
             </li>
 

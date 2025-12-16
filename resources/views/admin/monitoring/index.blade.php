@@ -9,7 +9,7 @@
     <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div>
             <h1 class="text-xl lg:text-2xl font-bold text-gray-900">Monitoring Penilaian</h1>
-            <p class="text-gray-600 text-sm lg:text-base">Pantau hasil penilaian staf dari siklus aktif</p>
+            <p class="text-gray-600 text-sm lg:text-base">Pantau hasil penilaian staf dari periode aktif</p>
         </div>
     </div>
 
@@ -34,23 +34,23 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Tidak Ada Siklus Aktif</h3>
-            <p class="text-gray-600 mb-4">Saat ini tidak ada siklus penilaian yang aktif.</p>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Tidak Ada Periode Aktif</h3>
+            <p class="text-gray-600 mb-4">Saat ini tidak ada periode penilaian yang aktif.</p>
             <a href="{{ route('admin.siklus.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Kelola Siklus
+                Kelola Periode
             </a>
         </div>
     </div>
     @else
-    <!-- Siklus Info Card -->
+    <!-- Periode Info Card -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-        <!-- Siklus Aktif -->
+        <!-- Periode Aktif -->
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
             <div class="flex items-center mb-2">
                 <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <h3 class="text-sm font-medium">Siklus Aktif</h3>
+                <h3 class="text-sm font-medium">Periode Aktif</h3>
             </div>
             <p class="text-2xl font-bold">{{ $siklusAktif->nama }}</p>
             <p class="text-xs mt-1 opacity-90">{{ $siklusAktif->tanggal_mulai->format('d M Y') }} - {{ $siklusAktif->tanggal_selesai->format('d M Y') }}</p>

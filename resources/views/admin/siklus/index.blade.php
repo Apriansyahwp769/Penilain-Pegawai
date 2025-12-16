@@ -1,18 +1,19 @@
+<!-- Siklus -> Periode -->
 @extends('layouts.admin')
 
-@section('page-title', 'Siklus Penilaian')
+@section('page-title', 'Periode Penilaian')
 
 @section('content')
 <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Page Header -->
     <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div>
-            <h1 class="text-xl lg:text-2xl font-bold text-gray-900">Siklus Penilaian</h1>
-            <p class="text-gray-600 text-sm lg:text-base">Kelola periode dan siklus penilaian kinerja</p>
+            <h1 class="text-xl lg:text-2xl font-bold text-gray-900">Periode Penilaian</h1>
+            <p class="text-gray-600 text-sm lg:text-base">Kelola periode dan periode penilaian kinerja</p>
         </div>
         <button onclick="openCreateModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full lg:w-auto">
             <i data-lucide="plus" class="w-4 h-4 lg:w-5 lg:h-5"></i>
-            <span class="text-sm lg:text-base">Buat Siklus Baru</span>
+            <span class="text-sm lg:text-base">Buat Periode Baru</span>
         </button>
     </div>
 
@@ -51,7 +52,7 @@
             <table class="w-full min-w-[800px] lg:min-w-0">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200">
-                        <th class="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs lg:text-sm font-semibold text-gray-900">Nama Siklus</th>
+                        <th class="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs lg:text-sm font-semibold text-gray-900">Nama Periode</th>
                         <th class="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs lg:text-sm font-semibold text-gray-900">Tanggal Mulai</th>
                         <th class="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs lg:text-sm font-semibold text-gray-900">Deadline</th>
                         <th class="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs lg:text-sm font-semibold text-gray-900">Finalisasi</th>
@@ -125,7 +126,7 @@
                         <td colspan="6" class="px-4 lg:px-6 py-8 text-center text-gray-500">
                             <div class="flex flex-col items-center space-y-2">
                                 <i data-lucide="calendar-x" class="w-12 h-12 text-gray-300"></i>
-                                <p class="text-sm lg:text-base">Belum ada siklus penilaian</p>
+                                <p class="text-sm lg:text-base">Belum ada periode penilaian</p>
                                 <button onclick="openCreateModal()" class="text-blue-600 hover:text-blue-700 text-sm">
                                     Buat siklus pertama Anda
                                 </button>
@@ -143,7 +144,7 @@
 <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-gray-900">Buat Siklus Baru</h2>
+            <h2 class="text-xl font-bold text-gray-900">Buat Periode Baru</h2>
             <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -153,10 +154,10 @@
             @csrf
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siklus</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Periode</label>
                 <input type="text" name="nama" required
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Contoh: Penilaian Kinerja Q1 2024">
+                    placeholder="Contoh: Periode 2025 Januari">
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,7 +219,7 @@
             @method('PUT')
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siklus</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Periode</label>
                 <input type="text" id="edit_nama" name="nama" required
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>

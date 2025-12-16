@@ -13,12 +13,7 @@
 
         <!-- Right Section -->
         <div class="flex items-center space-x-3 lg:space-x-4">
-            <!-- Notifications -->
-            <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-
+           
             <!-- User Profile -->
             <div class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                 <div class="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">

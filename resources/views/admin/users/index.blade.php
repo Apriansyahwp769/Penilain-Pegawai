@@ -179,6 +179,13 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        @if($users->hasPages())
+        <div class="px-4 py-3 border-t border-gray-200">
+            {{ $users->links('vendor.pagination.tailwind') }}
+        </div>
+        @endif
     </div>
 </div>
 
@@ -197,6 +204,17 @@
         <form action="{{ route('admin.users.store') }}" method="POST">
             @csrf
             <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <!-- Error Messages -->
+                @if($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <!-- Nama -->
                     <div>
@@ -204,6 +222,7 @@
                         <input
                             type="text"
                             name="name"
+                            value="{{ old('name') }}"
                             required
                             placeholder="Masukkan nama lengkap"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -216,6 +235,7 @@
                         <input
                             type="email"
                             name="email"
+                            value="{{ old('email') }}"
                             required
                             placeholder="email@example.com"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -240,6 +260,7 @@
                         <input
                             type="text"
                             name="nip"
+                            value="{{ old('nip') }}"
                             placeholder="Nomor Induk Pegawai"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                         >
@@ -251,7 +272,7 @@
                         <select name="division_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
                             <option value="">Pilih Divisi</option>
                             @foreach($divisions as $division)
-                                <option value="{{ $division->id }}">{{ $division->name }}</option>
+                                <option value="{{ $division->id }}" {{ old('division_id') == $division->id ? 'selected' : '' }}>{{ $division->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -262,7 +283,7 @@
                         <select name="position_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
                             <option value="">Pilih Jabatan</option>
                             @foreach($positions as $position)
-                                <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                <option value="{{ $position->id }}" {{ old('position_id') == $position->id ? 'selected' : '' }}>{{ $position->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -273,6 +294,7 @@
                         <input
                             type="text"
                             name="phone"
+                            value="{{ old('phone') }}"
                             placeholder="Nomor telepon"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                         >
@@ -284,6 +306,7 @@
                         <input
                             type="date"
                             name="join_date"
+                            value="{{ old('join_date') }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                         >
                     </div>
@@ -292,9 +315,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
                         <select name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                            <option value="staff">Staff</option>
-                            <option value="ketua_divisi">Ketua Divisi</option>
-                            <option value="admin">Admin</option>
+                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                            <option value="ketua_divisi" {{ old('role') == 'ketua_divisi' ? 'selected' : '' }}>Ketua Divisi</option>
+                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
                     </div>
 
@@ -302,8 +325,8 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
                         <select name="is_active" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="1" {{ old('is_active') == '1' ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                 </div>
@@ -345,6 +368,11 @@
             @csrf
             @method('PUT')
             <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <!-- Error Messages -->
+                <div id="editErrors" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    <ul id="editErrorList" class="list-disc pl-5 space-y-1"></ul>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <!-- Nama -->
                     <div>
@@ -479,6 +507,8 @@
 </div>
 
 <script>
+// Pagination and filter already working.
+
 // Filter Functions
 function filterUsers() {
     const divisionFilter = document.getElementById('divisionFilter').value;
@@ -488,7 +518,6 @@ function filterUsers() {
     const userRows = document.querySelectorAll('.user-row');
     let visibleCount = 0;
     
-    // Update active filters display
     updateActiveFilters(divisionFilter, roleFilter, statusFilter);
     
     userRows.forEach(row => {
@@ -497,27 +526,14 @@ function filterUsers() {
         const status = row.getAttribute('data-status');
         
         let showRow = true;
+        if (divisionFilter && division !== divisionFilter) showRow = false;
+        if (roleFilter && role !== roleFilter) showRow = false;
+        if (statusFilter && status !== statusFilter) showRow = false;
         
-        // Apply filters
-        if (divisionFilter && division !== divisionFilter) {
-            showRow = false;
-        }
-        if (roleFilter && role !== roleFilter) {
-            showRow = false;
-        }
-        if (statusFilter && status !== statusFilter) {
-            showRow = false;
-        }
-        
-        if (showRow) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = showRow ? '' : 'none';
+        if (showRow) visibleCount++;
     });
     
-    // Show/hide empty state
     const emptyState = document.querySelector('tbody tr:only-child');
     if (emptyState && emptyState.querySelector('.text-gray-500')) {
         emptyState.style.display = visibleCount === 0 ? '' : 'none';
@@ -527,71 +543,35 @@ function filterUsers() {
 function updateActiveFilters(division, role, status) {
     const activeFilters = document.getElementById('activeFilters');
     activeFilters.innerHTML = '';
-    
     let hasActiveFilters = false;
     
     if (division) {
         const divisionName = document.querySelector(`#divisionFilter option[value="${division}"]`).textContent;
-        activeFilters.innerHTML += `
-            <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                Divisi: ${divisionName}
-                <button onclick="removeFilter('division')" class="ml-1 text-blue-600 hover:text-blue-800">
-                    <i data-lucide="x" class="w-3 h-3"></i>
-                </button>
-            </span>
-        `;
+        activeFilters.innerHTML += `<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Divisi: ${divisionName}<button onclick="removeFilter('division')" class="ml-1 text-blue-600 hover:text-blue-800"><i data-lucide="x" class="w-3 h-3"></i></button></span>`;
         hasActiveFilters = true;
     }
     
     if (role) {
         const roleText = role === 'admin' ? 'Admin' : role === 'ketua_divisi' ? 'Ketua Divisi' : 'Staff';
-        activeFilters.innerHTML += `
-            <span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                Role: ${roleText}
-                <button onclick="removeFilter('role')" class="ml-1 text-purple-600 hover:text-purple-800">
-                    <i data-lucide="x" class="w-3 h-3"></i>
-                </button>
-            </span>
-        `;
+        activeFilters.innerHTML += `<span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Role: ${roleText}<button onclick="removeFilter('role')" class="ml-1 text-purple-600 hover:text-purple-800"><i data-lucide="x" class="w-3 h-3"></i></button></span>`;
         hasActiveFilters = true;
     }
     
     if (status) {
         const statusText = status === 'active' ? 'Active' : 'Inactive';
-        activeFilters.innerHTML += `
-            <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                Status: ${statusText}
-                <button onclick="removeFilter('status')" class="ml-1 text-green-600 hover:text-green-800">
-                    <i data-lucide="x" class="w-3 h-3"></i>
-                </button>
-            </span>
-        `;
+        activeFilters.innerHTML += `<span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Status: ${statusText}<button onclick="removeFilter('status')" class="ml-1 text-green-600 hover:text-green-800"><i data-lucide="x" class="w-3 h-3"></i></button></span>`;
         hasActiveFilters = true;
     }
     
-    if (hasActiveFilters) {
-        activeFilters.classList.remove('hidden');
-    } else {
-        activeFilters.classList.add('hidden');
-    }
-    
-    // Re-initialize Lucide icons for the new buttons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    activeFilters.classList.toggle('hidden', !hasActiveFilters);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function removeFilter(filterType) {
     switch(filterType) {
-        case 'division':
-            document.getElementById('divisionFilter').value = '';
-            break;
-        case 'role':
-            document.getElementById('roleFilter').value = '';
-            break;
-        case 'status':
-            document.getElementById('statusFilter').value = '';
-            break;
+        case 'division': document.getElementById('divisionFilter').value = ''; break;
+        case 'role': document.getElementById('roleFilter').value = ''; break;
+        case 'status': document.getElementById('statusFilter').value = ''; break;
     }
     filterUsers();
 }
@@ -604,27 +584,14 @@ function resetFilters() {
 }
 
 // Modal Functions
-function openCreateModal() {
-    document.getElementById('createModal').classList.remove('hidden');
-}
-
-function closeCreateModal() {
-    document.getElementById('createModal').classList.add('hidden');
-}
+function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
+function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
 
 function editUser(id) {
     fetch(`/admin/users/${id}/json`)
-        .then(res => {
-            if (!res.ok) throw new Error("Network response was not ok");
-            return res.json();
-        })
+        .then(res => res.ok ? res.json() : Promise.reject('User not found'))
         .then(data => {
-            console.log('User data:', data);
-
-            // Set form action URL
             document.getElementById('editForm').action = `/admin/users/${id}`;
-
-            // Populate form fields dengan ID yang BENAR
             document.getElementById('edit_name').value = data.name || '';
             document.getElementById('edit_email').value = data.email || '';
             document.getElementById('edit_nip').value = data.nip || '';
@@ -634,35 +601,62 @@ function editUser(id) {
             document.getElementById('edit_role').value = data.role || 'staff';
             document.getElementById('edit_join_date').value = data.join_date || '';
             document.getElementById('edit_is_active').value = data.is_active ? '1' : '0';
-            
-            // Clear password field
             document.getElementById('edit_password').value = '';
-
-            // Tampilkan modal edit
+            document.getElementById('editErrors').classList.add('hidden');
             document.getElementById('editModal').classList.remove('hidden');
         })
         .catch(err => {
             alert("Gagal memuat data user");
-            console.error('Error:', err);
+            console.error(err);
         });
 }
 
-function closeEditModal() {
-    document.getElementById('editModal').classList.add('hidden');
-}
+function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
 
-// Close modal ketika klik outside
-document.getElementById('createModal').addEventListener('click', function(e) {
-    if (e.target === this) closeCreateModal();
-});
+document.getElementById('createModal').addEventListener('click', e => { if (e.target === this) closeCreateModal(); });
+document.getElementById('editModal').addEventListener('click', e => { if (e.target === this) closeEditModal(); });
 
-document.getElementById('editModal').addEventListener('click', function(e) {
-    if (e.target === this) closeEditModal();
-});
-
-// Initialize filters on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     filterUsers();
+    
+    // Handle edit form submission with error display
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const url = this.action;
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else if (data.errors) {
+                const errorDiv = document.getElementById('editErrors');
+                const errorList = document.getElementById('editErrorList');
+                errorList.innerHTML = '';
+                for (let field in data.errors) {
+                    data.errors[field].forEach(msg => {
+                        const li = document.createElement('li');
+                        li.textContent = msg;
+                        errorList.appendChild(li);
+                    });
+                }
+                errorDiv.classList.remove('hidden');
+            } else {
+                alert('Terjadi kesalahan');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Gagal mengirim data');
+        });
+    });
 });
 </script>
 @endsection

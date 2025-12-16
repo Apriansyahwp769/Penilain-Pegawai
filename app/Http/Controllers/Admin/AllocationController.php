@@ -33,7 +33,6 @@ class AllocationController extends Controller
                 'penilaiList',
                 'dinilaiList'
             ));
-
         } catch (\Exception $e) {
             Log::error("Allocation Index Error: " . $e->getMessage());
             return back()->with('error', 'Gagal memuat data alokasi.');
@@ -41,64 +40,75 @@ class AllocationController extends Controller
     }
 
     /**
-     * Store new allocation
-     */
+     * Auto Allocation 
+     **/
     public function store(Request $request)
     {
         DB::beginTransaction();
-        
+
         try {
-            $validated = $request->validate([
-                'siklus_id'  => 'required|exists:siklus,id',
-                'penilai_id' => 'required|exists:users,id',
-                'dinilai_id' => 'required|exists:users,id|different:penilai_id',
+            $request->validate([
+                'siklus_id' => 'required|exists:siklus,id'
             ]);
 
-            $validated['status'] = 'pending';
+            $siklusId = $request->siklus_id;
+            $totalCreated = 0;
 
-            $penilai = User::find($validated['penilai_id']);
-            $dinilai = User::find($validated['dinilai_id']);
+            // Ambil semua Ketua Divisi yang aktif
+            $ketuaDivisi = User::where('role', 'ketua_divisi')
+                ->where('is_active', 1)
+                ->get();
 
-            if ($penilai->role !== 'ketua_divisi') {
-                return back()->with('error', 'Penilai harus Ketua Divisi')->withInput();
+            if ($ketuaDivisi->isEmpty()) {
+                DB::rollBack();
+                return back()->with('error', 'Tidak ada Ketua Divisi aktif yang ditemukan');
             }
 
-            if ($dinilai->role !== 'staff') {
-                return back()->with('error', 'Yang dinilai harus Staff')->withInput();
+            foreach ($ketuaDivisi as $ketua) {
+                $staffs = User::where('role', 'staff')
+                    ->where('is_active', 1)
+                    ->where('division_id', $ketua->division_id) 
+                    ->get();
+
+                foreach ($staffs as $staff) {
+                    $exists = Allocation::where([
+                        'siklus_id'  => $siklusId,
+                        'penilai_id' => $ketua->id,
+                        'dinilai_id' => $staff->id,
+                    ])->exists();
+
+                    if ($exists) {
+                        continue;
+                    }
+
+                    $allocation = Allocation::create([
+                        'siklus_id'  => $siklusId,
+                        'penilai_id' => $ketua->id,
+                        'dinilai_id' => $staff->id,
+                        'status'     => 'in_progress'
+                    ]);
+
+                    Penilaian::create([
+                        'allocation_id' => $allocation->id,
+                        'status'        => 'belum_dinilai'
+                    ]);
+
+                    $totalCreated++;
+                }
             }
-
-            $exists = Allocation::where('siklus_id', $validated['siklus_id'])
-                ->where('penilai_id', $validated['penilai_id'])
-                ->where('dinilai_id', $validated['dinilai_id'])
-                ->exists();
-
-            if ($exists) {
-                return back()->with('error', 'Alokasi dengan kombinasi tersebut sudah ada')->withInput();
-            }
-
-            // Create Allocation
-            $allocation = Allocation::create($validated);
-
-            // Auto create Penilaian record dengan status belum_dinilai
-            Penilaian::create([
-                'allocation_id' => $allocation->id,
-                'status' => 'belum_dinilai',
-                'skor_akhir' => null,
-                'catatan' => null
-            ]);
 
             DB::commit();
 
-            return redirect()->route('admin.allocations.index')
-                ->with('success', 'Alokasi berhasil ditambahkan');
+            if ($totalCreated === 0) {
+                return back()->with('warning', 'Tidak ada alokasi baru yang dibuat. Semua kombinasi sudah ada.');
+            }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            DB::rollBack();
-            return back()->withErrors($e->errors())->withInput();
+            return back()->with('success', "Berhasil membuat {$totalCreated} alokasi otomatis");
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Store Allocation Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal menyimpan alokasi: ' . $e->getMessage())->withInput();
+            Log::error("Auto Allocation Error: " . $e->getMessage());
+            return back()->with('error', 'Gagal membuat alokasi otomatis: ' . $e->getMessage());
         }
     }
 
@@ -117,7 +127,6 @@ class AllocationController extends Controller
                 ], 404);
             }
 
-            // Jika request AJAX, kirim JSON
             if (request()->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -125,9 +134,7 @@ class AllocationController extends Controller
                 ]);
             }
 
-            // Jika akses langsung lewat browser
             return view('admin.allocations.edit', compact('allocation'));
-
         } catch (\Exception $e) {
             Log::error("Edit Allocation Error: " . $e->getMessage());
 
@@ -178,7 +185,6 @@ class AllocationController extends Controller
 
             return redirect()->route('admin.allocations.index')
                 ->with('success', 'Alokasi berhasil diperbarui');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
@@ -194,12 +200,10 @@ class AllocationController extends Controller
     {
         try {
             $allocation = Allocation::findOrFail($id);
-            // Penilaian akan terhapus otomatis karena onDelete('cascade')
             $allocation->delete();
 
             return redirect()->route('admin.allocations.index')
                 ->with('success', 'Alokasi berhasil dihapus');
-
         } catch (\Exception $e) {
             Log::error("Delete Allocation Error: " . $e->getMessage());
             return back()->with('error', 'Gagal menghapus alokasi: ' . $e->getMessage());

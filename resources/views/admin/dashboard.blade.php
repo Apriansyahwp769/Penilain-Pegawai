@@ -8,11 +8,11 @@
     <!-- Page Header -->
     <div class="mb-6">
         <h1 class="text-xl lg:text-2xl font-bold text-gray-900">👋 Halo!! Admin Selamat Datang</h1>
-        <p class="text-gray-600 text-sm lg:text-base">Monitoring Progres Siklus Aktif</p>
+        <p class="text-gray-600 text-sm lg:text-base">Monitoring Progres Periode Aktif</p>
     </div>
 
     @if(!$siklusAktif)
-        <!-- Alert jika tidak ada siklus aktif -->
+        <!-- Alert jika tidak ada Periode aktif -->
         <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -22,7 +22,7 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm text-yellow-700">
-                        Tidak ada siklus aktif. Silakan buat atau aktifkan siklus terlebih dahulu.
+                        Tidak ada Periode aktif. Silakan buat atau aktifkan Periode terlebih dahulu.
                     </p>
                 </div>
             </div>
@@ -31,13 +31,13 @@
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <!-- Card 1: Siklus Aktif -->
+        <!-- Card 1: Periode Aktif -->
         <div class="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-6 shadow-sm">
             <div class="flex items-center mb-3">
                 <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
-                <h3 class="text-sm font-medium text-blue-800">Siklus Aktif</h3>
+                <h3 class="text-sm font-medium text-blue-800">Periode Aktif</h3>
             </div>
             <p class="text-3xl font-bold text-blue-700 mt-1 truncate">{{ $siklusNama }}</p>
             <p class="text-xs mt-2 text-gray-600">

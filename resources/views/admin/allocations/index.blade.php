@@ -36,9 +36,9 @@
             <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
                 <!-- Filter Siklus -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Filter Siklus</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Filter Periode</label>
                     <select id="siklusFilter" onchange="filterAllocations()" class="w-full lg:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                        <option value="">Semua Siklus</option>
+                        <option value="">Semua Periode</option>
                         @foreach($siklusList as $siklus)
                             <option value="{{ $siklus->id }}">{{ $siklus->nama }}</option>
                         @endforeach
@@ -171,9 +171,9 @@
             <div class="p-4 space-y-4">
                 <!-- Siklus -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Siklus *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
                     <select name="siklus_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                        <option value="">Pilih Siklus</option>
+                        <option value="">Pilih Periode</option>
                         @foreach ($siklusList as $s)
                             <option value="{{ $s->id }}">{{ $s->nama }}</option>
                         @endforeach
@@ -181,7 +181,7 @@
                 </div>
 
                 <!-- Penilai -->
-                <div>
+                <!-- <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Penilai (Ketua Divisi) *</label>
                     <select name="penilai_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
                         <option value="">Pilih Penilai</option>
@@ -189,10 +189,10 @@
                             <option value="{{ $p->id }}">{{ $p->name }} ({{ $p->position->name ?? '-' }})</option>
                         @endforeach
                     </select>
-                </div>
+                </div> -->
 
                 <!-- Dinilai -->
-                <div>
+                <!-- <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Dinilai (Staff) *</label>
                     <select name="dinilai_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
                         <option value="">Pilih Staff</option>
@@ -200,7 +200,7 @@
                             <option value="{{ $d->id }}">{{ $d->name }} ({{ $d->position->name ?? '-' }})</option>
                         @endforeach
                     </select>
-                </div>
+                </div> -->
 
                 <!-- Actions -->
                 <div class="flex space-x-2 pt-4">
@@ -235,9 +235,9 @@
             <div class="p-4 space-y-4">
                 <!-- Siklus -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Siklus *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
                     <select name="siklus_id" id="edit_siklus_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                        <option value="">Pilih Siklus</option>
+                        <option value="">Pilih Periode</option>
                         @foreach ($siklusList as $s)
                             <option value="{{ $s->id }}">{{ $s->nama }}</option>
                         @endforeach

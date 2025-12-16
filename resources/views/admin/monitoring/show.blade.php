@@ -60,7 +60,7 @@
                 </div>
             </div>
 
-            <!-- Skor Akhir & Info Siklus -->
+            <!-- Skor Akhir & Info Periode -->
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700">Skor Akhir</span>

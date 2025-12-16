@@ -8,17 +8,44 @@ use App\Models\Division;
 use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['division', 'position'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = User::with(['division', 'position']);
+
+        // Apply filters
+        if ($request->filled('division_id')) {
+            $query->where('division_id', $request->division_id);
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            $isActive = $request->status === 'active' ? 1 : 0;
+            $query->where('is_active', $isActive);
+        }
+
+        // Apply search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('nip', 'like', "%{$search}%");
+            });
+        }
+
+        // Pagination with per_page option
+        $perPage = $request->get('per_page', 10);
+        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         $divisions = Division::where('status', true)->get();
         $positions = Position::where('status', true)->get();
@@ -27,41 +54,44 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $divisions = Division::where('status', true)->get();
-        $positions = Position::where('status', true)->get();
-
-        return view('admin.users.create', compact('divisions', 'positions'));
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-            'nip' => 'nullable|unique:users',
-            'division_id' => 'nullable|exists:divisions,id',
-            'position_id' => 'nullable|exists:positions,id',
-            'phone' => 'nullable|string|max:20',
-            'join_date' => 'nullable|date',
-            'role' => 'required|in:admin,ketua_divisi,staff',
-            'is_active' => 'required|boolean'
-        ]);
-
         try {
-            $validated['password'] = Hash::make($validated['password']);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:8',
+                'nip' => 'nullable|string|unique:users,nip',
+                'division_id' => 'nullable|exists:divisions,id',
+                'position_id' => 'nullable|exists:positions,id',
+                'phone' => 'nullable|string|max:20',
+                'join_date' => 'nullable|date',
+                'role' => 'required|in:admin,ketua_divisi,staff',
+                'is_active' => 'required|boolean'
+            ], [
+                'name.required' => 'Nama lengkap wajib diisi',
+                'email.required' => 'Email wajib diisi',
+                'email.email' => 'Format email tidak valid',
+                'email.unique' => 'Email sudah terdaftar',
+                'password.required' => 'Password wajib diisi',
+                'password.min' => 'Password minimal 8 karakter',
+                'nip.unique' => 'NIP sudah terdaftar, gunakan NIP yang berbeda',
+                'role.required' => 'Role wajib dipilih',
+                'is_active.required' => 'Status wajib dipilih'
+            ]);
 
+            $validated['password'] = Hash::make($validated['password']);
             User::create($validated);
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User berhasil dibuat!');
+                
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Gagal membuat user: ' . $e->getMessage())
@@ -70,43 +100,33 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
-    {
-        return view('admin.users.show', compact('user'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
-    {
-        $divisions = Division::where('status', true)->get();
-        $positions = Position::where('status', true)->get();
-
-        return view('admin.users.edit', compact('user', 'divisions', 'positions'));
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email,' . $user->id,
-            'password'   => 'nullable|min:8',
-            'nip'        => 'nullable|unique:users,nip,' . $user->id,
-            'division_id'=> 'nullable|exists:divisions,id',
-            'position_id'=> 'nullable|exists:positions,id',
-            'phone'      => 'nullable|string|max:20',
-            'join_date'  => 'nullable|date',
-            'role'       => 'required|in:admin,ketua_divisi,staff',
-            'is_active'  => 'required|boolean'
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $user->id,
+                'password' => 'nullable|min:8',
+                'nip' => 'nullable|string|unique:users,nip,' . $user->id,
+                'division_id' => 'nullable|exists:divisions,id',
+                'position_id' => 'nullable|exists:positions,id',
+                'phone' => 'nullable|string|max:20',
+                'join_date' => 'nullable|date',
+                'role' => 'required|in:admin,ketua_divisi,staff',
+                'is_active' => 'required|boolean'
+            ], [
+                'name.required' => 'Nama lengkap wajib diisi',
+                'email.required' => 'Email wajib diisi',
+                'email.email' => 'Format email tidak valid',
+                'email.unique' => 'Email sudah terdaftar',
+                'password.min' => 'Password minimal 8 karakter',
+                'nip.unique' => 'NIP sudah terdaftar, gunakan NIP yang berbeda',
+                'role.required' => 'Role wajib dipilih',
+                'is_active.required' => 'Status wajib dipilih'
+            ]);
+
             if (!empty($validated['password'])) {
                 $validated['password'] = Hash::make($validated['password']);
             } else {
@@ -117,6 +137,11 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')
                 ->with('success', 'User berhasil diperbarui!');
+                
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Gagal memperbarui user: ' . $e->getMessage())

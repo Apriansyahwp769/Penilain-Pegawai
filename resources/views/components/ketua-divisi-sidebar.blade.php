@@ -3,10 +3,10 @@
     <div class="p-4 lg:p-6 border-b border-gray-200">
         <div class="flex items-center space-x-3">
             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">PK</span>
+                <span class="text-white font-bold text-sm">PM</span>
             </div>
             <div class="flex-1">
-                <h1 class="text-lg font-semibold text-gray-900">Performance App</h1>
+                <h1 class="text-lg font-semibold text-gray-900">PETRO Muba</h1>
                 <p class="text-sm text-gray-500 hidden lg:block">Ketua Divisi</p>
             </div>
             <!-- Close Button Mobile -->

@@ -48,9 +48,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <div class="w-full sm:w-48">
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Filter Siklus</label>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Filter Periode</label>
                     <select id="siklusFilter" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm">
-                        <option value="">Semua Siklus</option>
+                        <option value="">Semua Periode</option>
                         @foreach($siklusList as $siklus)
                         <option value="{{ $siklus->id }}">{{ $siklus->nama }}</option>
                         @endforeach
