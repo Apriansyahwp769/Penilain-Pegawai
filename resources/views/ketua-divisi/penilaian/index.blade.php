@@ -47,6 +47,7 @@
                         <option value="">Semua Status</option>
                         <option value="selesai">Selesai</option>
                         <option value="draft">Draft</option>
+                        <option value="menunggu_verifikasi">Menunggu Verifikasi</option>
                         <option value="belum_dinilai">Belum Dinilai</option>
                     </select>
                 </div>

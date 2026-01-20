@@ -24,8 +24,18 @@ class AllocationController extends Controller
                 ->get();
 
             $siklusList = Siklus::where('status', 'active')->get();
-            $penilaiList = User::where('role', 'ketua_divisi')->where('is_active', 1)->with('position')->get();
-            $dinilaiList = User::where('role', 'staff')->where('is_active', 1)->with('position')->get();
+            
+            // Penilai: semua user aktif dengan position_id = 1
+            $penilaiList = User::where('position_id', 1)
+                ->where('is_active', 1)
+                ->with('position')
+                ->get();
+
+            // Yang dinilai: hanya staff aktif
+            $dinilaiList = User::where('role', 'staff')
+                ->where('is_active', 1)
+                ->with('position')
+                ->get();
 
             return view('admin.allocations.index', compact(
                 'allocations',
@@ -40,8 +50,8 @@ class AllocationController extends Controller
     }
 
     /**
-     * Auto Allocation 
-     **/
+     * Auto Allocation berdasarkan position_id = 1 sebagai penilai
+     */
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -54,40 +64,47 @@ class AllocationController extends Controller
             $siklusId = $request->siklus_id;
             $totalCreated = 0;
 
-            // Ambil semua Ketua Divisi yang aktif
-            $ketuaDivisi = User::where('role', 'ketua_divisi')
+            // Ambil semua user dengan position_id = 1 sebagai penilai
+            $penilaiList = User::where('position_id', 1)
                 ->where('is_active', 1)
                 ->get();
 
-            if ($ketuaDivisi->isEmpty()) {
+            if ($penilaiList->isEmpty()) {
                 DB::rollBack();
-                return back()->with('error', 'Tidak ada Ketua Divisi aktif yang ditemukan');
+                return back()->with('error', 'Tidak ada user dengan position_id = 1 (penilai) yang aktif.');
             }
 
-            foreach ($ketuaDivisi as $ketua) {
+            foreach ($penilaiList as $penilai) {
+                // Ambil staff aktif di divisi yang sama
                 $staffs = User::where('role', 'staff')
                     ->where('is_active', 1)
-                    ->where('division_id', $ketua->division_id) 
+                    ->where('division_id', $penilai->division_id)
                     ->get();
 
                 foreach ($staffs as $staff) {
-                    $exists = Allocation::where([
-                        'siklus_id'  => $siklusId,
-                        'penilai_id' => $ketua->id,
-                        'dinilai_id' => $staff->id,
-                    ])->exists();
-
-                    if ($exists) {
+                    // Hindari self-allocation (jika ada kesalahan data)
+                    if ($penilai->id === $staff->id) {
                         continue;
                     }
 
+                    // Cek duplikasi alokasi
+                    if (Allocation::where([
+                        'siklus_id'  => $siklusId,
+                        'penilai_id' => $penilai->id,
+                        'dinilai_id' => $staff->id,
+                    ])->exists()) {
+                        continue;
+                    }
+
+                    // Buat alokasi
                     $allocation = Allocation::create([
                         'siklus_id'  => $siklusId,
-                        'penilai_id' => $ketua->id,
+                        'penilai_id' => $penilai->id,
                         'dinilai_id' => $staff->id,
                         'status'     => 'in_progress'
                     ]);
 
+                    // Buat record penilaian awal
                     Penilaian::create([
                         'allocation_id' => $allocation->id,
                         'status'        => 'belum_dinilai'
@@ -103,7 +120,7 @@ class AllocationController extends Controller
                 return back()->with('warning', 'Tidak ada alokasi baru yang dibuat. Semua kombinasi sudah ada.');
             }
 
-            return back()->with('success', "Berhasil membuat {$totalCreated} alokasi otomatis");
+            return back()->with('success', "Berhasil membuat {$totalCreated} alokasi otomatis.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -163,14 +180,17 @@ class AllocationController extends Controller
             $penilai = User::find($validated['penilai_id']);
             $dinilai = User::find($validated['dinilai_id']);
 
-            if ($penilai->role !== 'ketua_divisi') {
-                return back()->with('error', 'Penilai harus Ketua Divisi')->withInput();
+            // ✅ Validasi: penilai HARUS position_id = 1
+            if ($penilai->position_id !== 1) {
+                return back()->with('error', 'Penilai harus memiliki position_id = 1')->withInput();
             }
 
+            // ✅ Validasi: yang dinilai HARUS role = staff
             if ($dinilai->role !== 'staff') {
-                return back()->with('error', 'Yang dinilai harus Staff')->withInput();
+                return back()->with('error', 'Yang dinilai harus memiliki role "staff"')->withInput();
             }
 
+            // Cek duplikat (kecuali diri sendiri)
             $duplicate = Allocation::where('siklus_id', $validated['siklus_id'])
                 ->where('penilai_id', $validated['penilai_id'])
                 ->where('dinilai_id', $validated['dinilai_id'])

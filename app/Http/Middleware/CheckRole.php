@@ -28,19 +28,9 @@ class CheckRole
 
         // Cek apakah role user sesuai
         if (!in_array($user->role, $roles)) {
-            // Redirect ke dashboard sesuai role mereka
-            switch ($user->role) {
-                case 'admin':
-                    return redirect()->route('admin.dashboard')
-                        ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
-                case 'ketua_divisi':
-                    return redirect()->route('ketua-divisi.dashboard')
-                        ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
-                case 'staff':
-                    return redirect()->route('staff.dashboard')
-                        ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
-            }
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
+
 
         return $next($request);
     }

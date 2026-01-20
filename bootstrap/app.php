@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan middleware alias 'role'
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'hrd' => \App\Http\Middleware\HrdOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

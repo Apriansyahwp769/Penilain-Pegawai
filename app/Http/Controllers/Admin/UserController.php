@@ -102,59 +102,84 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
-    {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $user->id,
-                'password' => 'nullable|min:8',
-                'nip' => 'nullable|string|unique:users,nip,' . $user->id,
-                'division_id' => 'nullable|exists:divisions,id',
-                'position_id' => 'nullable|exists:positions,id',
-                'phone' => 'nullable|string|max:20',
-                'join_date' => 'nullable|date',
-                'role' => 'required|in:admin,ketua_divisi,staff',
-                'is_active' => 'required|boolean'
-            ], [
-                'name.required' => 'Nama lengkap wajib diisi',
-                'email.required' => 'Email wajib diisi',
-                'email.email' => 'Format email tidak valid',
-                'email.unique' => 'Email sudah terdaftar',
-                'password.min' => 'Password minimal 8 karakter',
-                'nip.unique' => 'NIP sudah terdaftar, gunakan NIP yang berbeda',
-                'role.required' => 'Role wajib dipilih',
-                'is_active.required' => 'Status wajib dipilih'
-            ]);
+ public function update(Request $request, User $user)
+{
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:8',
+            'nip' => 'nullable|string|unique:users,nip,' . $user->id,
+            'division_id' => 'nullable|exists:divisions,id',
+            'position_id' => 'nullable|exists:positions,id',
+            'phone' => 'nullable|string|max:20',
+            'join_date' => 'nullable|date',
+            'role' => 'required|in:admin,ketua_divisi,staff',
+            'is_active' => 'required|boolean'
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah terdaftar',
+            'password.min' => 'Password minimal 8 karakter',
+            'nip.unique' => 'NIP sudah terdaftar, gunakan NIP yang berbeda',
+            'role.required' => 'Role wajib dipilih',
+            'is_active.required' => 'Status wajib dipilih'
+        ]);
 
-            if (!empty($validated['password'])) {
-                $validated['password'] = Hash::make($validated['password']);
-            } else {
-                unset($validated['password']);
-            }
-
-            $user->update($validated);
-
-            return redirect()->route('admin.users.index')
-                ->with('success', 'User berhasil diperbarui!');
-                
-        } catch (ValidationException $e) {
-            return redirect()->back()
-                ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal memperbarui user: ' . $e->getMessage())
-                ->withInput();
+        // Only update password if provided
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
-    }
 
+        $user->update($validated);
+
+        // Check if request is AJAX
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil diperbarui!'
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User berhasil diperbarui!');
+            
+    } catch (ValidationException $e) {
+        // Return validation errors as JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->validator->errors()
+            ], 422);
+        }
+        
+        return redirect()->back()
+            ->withErrors($e->validator)
+            ->withInput();
+    } catch (\Exception $e) {
+        // Return error as JSON for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui user: ' . $e->getMessage()
+            ], 500);
+        }
+        
+        return redirect()->back()
+            ->with('error', 'Gagal memperbarui user: ' . $e->getMessage())
+            ->withInput();
+    }
+}
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(User $user)
     {
         try {
+            // Prevent deleting own account
             if ((int) $user->id === (int) auth()->id()) {
                 return redirect()->back()
                     ->with('error', 'Tidak dapat menghapus akun sendiri!');
@@ -176,10 +201,35 @@ class UserController extends Controller
     public function json(User $user)
     {
         try {
+            // Load relationships
             $user->load(['division', 'position']);
-            return response()->json($user);
+            
+            // Return user data as JSON
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'nip' => $user->nip,
+                'phone' => $user->phone,
+                'division_id' => $user->division_id,
+                'position_id' => $user->position_id,
+                'role' => $user->role,
+                'is_active' => $user->is_active ? 1 : 0,
+                'join_date' => $user->join_date,
+                'division' => $user->division ? [
+                    'id' => $user->division->id,
+                    'name' => $user->division->name
+                ] : null,
+                'position' => $user->position ? [
+                    'id' => $user->position->id,
+                    'name' => $user->position->name
+                ] : null
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'User tidak ditemukan'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan'
+            ], 404);
         }
     }
 }

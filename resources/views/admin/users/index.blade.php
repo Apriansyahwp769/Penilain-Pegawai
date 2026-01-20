@@ -588,10 +588,23 @@ function openCreateModal() { document.getElementById('createModal').classList.re
 function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
 
 function editUser(id) {
+    console.log('Fetching user data for ID:', id);
+    
     fetch(`/admin/users/${id}/json`)
-        .then(res => res.ok ? res.json() : Promise.reject('User not found'))
+        .then(res => {
+            console.log('Response status:', res.status);
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
         .then(data => {
+            console.log('User data received:', data);
+            
+            // Set form action
             document.getElementById('editForm').action = `/admin/users/${id}`;
+            
+            // Fill form fields
             document.getElementById('edit_name').value = data.name || '';
             document.getElementById('edit_email').value = data.email || '';
             document.getElementById('edit_nip').value = data.nip || '';
@@ -601,20 +614,37 @@ function editUser(id) {
             document.getElementById('edit_role').value = data.role || 'staff';
             document.getElementById('edit_join_date').value = data.join_date || '';
             document.getElementById('edit_is_active').value = data.is_active ? '1' : '0';
+            
+            // Clear password field
             document.getElementById('edit_password').value = '';
+            
+            // Hide errors
             document.getElementById('editErrors').classList.add('hidden');
+            
+            // Show modal
             document.getElementById('editModal').classList.remove('hidden');
+            
+            console.log('Modal opened successfully');
         })
         .catch(err => {
-            alert("Gagal memuat data user");
-            console.error(err);
+            console.error('Error fetching user data:', err);
+            alert("Gagal memuat data user. Silakan coba lagi.");
         });
 }
 
-function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+function closeEditModal() { 
+    document.getElementById('editModal').classList.add('hidden'); 
+    document.getElementById('editErrors').classList.add('hidden');
+}
 
-document.getElementById('createModal').addEventListener('click', e => { if (e.target === this) closeCreateModal(); });
-document.getElementById('editModal').addEventListener('click', e => { if (e.target === this) closeEditModal(); });
+// Fixed modal backdrop click handlers
+document.getElementById('createModal').addEventListener('click', function(e) { 
+    if (e.target === this) closeCreateModal(); 
+});
+
+document.getElementById('editModal').addEventListener('click', function(e) { 
+    if (e.target === this) closeEditModal(); 
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     filterUsers();

@@ -18,8 +18,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
 
                 'nip' => '19876543210001',
-                'division_id' => null,  // admin tidak pakai divisi
-                'position_id' => null,  // admin tidak pakai posisi
+                'division_id' => null,
+                'position_id' => null,  
                 'phone' => '081234567890',
                 'join_date' => '2023-01-01',
 

@@ -17,7 +17,16 @@ class LoginController extends Controller
     {
         // Jika sudah login, redirect berdasarkan role
         if (Auth::check()) {
-            return $this->redirectBasedOnRole(Auth::user());
+            $user = Auth::user();
+            
+            // Pastikan user masih aktif
+            if (!$user->is_active) {
+                Auth::logout();
+                return redirect()->route('login')
+                    ->with('error', 'Akun Anda tidak aktif. Hubungi administrator.');
+            }
+            
+            return $this->redirectBasedOnRole($user);
         }
 
         return view('auth.login');
@@ -69,6 +78,12 @@ class LoginController extends Controller
      */
     protected function redirectBasedOnRole($user)
     {
+        // Pastikan user object lengkap dengan relasi yang dibutuhkan
+        if (!$user) {
+            return redirect()->route('login')
+                ->with('error', 'Session tidak valid. Silakan login kembali.');
+        }
+
         $message = 'Selamat datang, ' . $user->name . '!';
 
         switch ($user->role) {
@@ -77,8 +92,21 @@ class LoginController extends Controller
                     ->with('success', $message . ' (Administrator)');
 
             case 'ketua_divisi':
+                // Jika jabatan supervisor (HRD)
+                if ($user->position_id == 2) {
+                    return redirect()->route('hrd.dashboard')
+                        ->with('success', $message . ' (HRD)');
+                }
+
+                // Ketua divisi - Load relasi division jika belum
+                if (!$user->relationLoaded('division')) {
+                    $user->load('division');
+                }
+
+                $divisionName = $user->division ? $user->division->name : '';
+                
                 return redirect()->route('ketua-divisi.dashboard')
-                    ->with('success', $message . ' (Ketua Divisi ' . ($user->division->name ?? '') . ')');
+                    ->with('success', $message . ' (Ketua Divisi ' . $divisionName . ')');
 
             case 'staff':
                 return redirect()->route('staff.hasil_penilaian.index')
@@ -128,7 +156,7 @@ class LoginController extends Controller
         ], [
             'name.required' => 'Nama harus diisi',
             'email.required' => 'Email harus diisi',
-            'email.unique' => 'Email sudah terdaftar',
+            'email.unique' => 'Email sudah terdafar',
             'password.required' => 'Password harus diisi',
             'password.min' => 'Password minimal 8 karakter',
             'password.confirmed' => 'Konfirmasi password tidak cocok',

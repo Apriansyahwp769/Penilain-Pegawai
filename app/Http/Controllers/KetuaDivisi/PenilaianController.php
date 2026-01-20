@@ -7,63 +7,90 @@ use App\Models\Allocation;
 use App\Models\Penilaian;
 use App\Models\HasilPenilaian;
 use App\Models\Criterion;
+use App\Models\LogActivity; // ← Tambahkan ini
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PenilaianController extends Controller
 {
     /**
      * Display penilaian list untuk ketua divisi yang login
      */
-   public function index(Request $request)
-{
-    try {
-        $userId = Auth::id();
+    public function index(Request $request)
+    {
+        try {
+            $userId = Auth::id();
 
-        $allocations = Allocation::with([
+            $allocations = Allocation::with([
                 'dinilai.position',
                 'dinilai.division',
                 'siklus',
                 'penilaian'
             ])
-            ->whereHas('siklus', function ($query) {
-                // Sesuaikan dengan struktur kolom di tabel siklus
-                // Pilihan 1: jika ada kolom `is_active` (boolean)
-                // $query->where('is_active', true);
+                ->whereHas('siklus', function ($query) {
+                    $query->where('status', 'active');
+                })
+                ->byPenilai($userId)
+                ->orderBy('created_at', 'DESC')
+                ->get();
 
-                // Pilihan 2: jika ada kolom `status` dengan nilai 'active'
-                $query->where('status', 'active');
-            })
-            ->byPenilai($userId)
-            ->orderBy('created_at', 'DESC')
-            ->get();
-
-        $employees = $allocations->map(function ($allocation) {
-            $penilaian = $allocation->penilaian;
-
-            return [
-                'allocation_id' => $allocation->id,
-                'penilaian_id' => $penilaian ? $penilaian->id : null,
-                'nip' => $allocation->dinilai->nip ?? '-',
-                'name' => $allocation->dinilai->name ?? '-',
-                'position' => $allocation->dinilai->position->name ?? '-',
-                'division' => $allocation->dinilai->division->name ?? '-',
-                'skor_akhir' => $penilaian ? $penilaian->skor_akhir : null,
-                'status' => $penilaian ? $penilaian->status : 'belum_dinilai',
-                'status_badge' => $penilaian ? $penilaian->status_badge : 'bg-red-100 text-red-800',
-                'status_label' => $penilaian ? $penilaian->status_label : 'Belum Dinilai',
+            // Mapping status ke label & badge
+            $statusConfig = [
+                'selesai' => [
+                    'label' => 'Selesai',
+                    'badge' => 'bg-green-100 text-green-800'
+                ],
+                'draft' => [
+                    'label' => 'Draft',
+                    'badge' => 'bg-yellow-100 text-yellow-800'
+                ],
+                'menunggu_verifikasi' => [
+                    'label' => 'Menunggu Verifikasi',
+                    'badge' => 'bg-orange-100 text-orange-800'
+                ],
+                'belum_dinilai' => [
+                    'label' => 'Belum Dinilai',
+                    'badge' => 'bg-red-100 text-red-800'
+                ],
             ];
-        });
 
-        return view('ketua-divisi.penilaian.index', compact('employees'));
+            $employees = $allocations->map(function ($allocation) use ($statusConfig) {
+                $penilaian = $allocation->penilaian;
 
-    } catch (\Exception $e) {
-        Log::error("Penilaian Index Error: " . $e->getMessage());
-        return back()->with('error', 'Gagal memuat data penilaian.');
+                if ($penilaian) {
+                    $status = $penilaian->status; // draft, menunggu_verifikasi, selesai
+                } else {
+                    $status = 'belum_dinilai';
+                }
+
+                $config = $statusConfig[$status] ?? [
+                    'label' => 'Tidak Diketahui',
+                    'badge' => 'bg-gray-100 text-gray-800'
+                ];
+
+                return [
+                    'allocation_id' => $allocation->id,
+                    'penilaian_id' => $penilaian ? $penilaian->id : null,
+                    'nip' => $allocation->dinilai->nip ?? '-',
+                    'name' => $allocation->dinilai->name ?? '-',
+                    'position' => $allocation->dinilai->position->name ?? '-',
+                    'division' => $allocation->dinilai->division->name ?? '-',
+                    'skor_akhir' => $penilaian ? $penilaian->skor_akhir : null,
+                    'status' => $status,
+                    'status_badge' => $config['badge'],
+                    'status_label' => $config['label'],
+                ];
+            });
+
+            return view('ketua-divisi.penilaian.index', compact('employees'));
+        } catch (\Exception $e) {
+            Log::error("Penilaian Index Error: " . $e->getMessage());
+            return back()->with('error', 'Gagal memuat data penilaian.');
+        }
     }
-}
 
     /**
      * Show form untuk melakukan penilaian
@@ -78,10 +105,10 @@ class PenilaianController extends Controller
             // Cek apakah sudah ada penilaian
             $penilaian = Penilaian::where('allocation_id', $allocationId)->first();
 
-            // Jika sudah selesai, redirect ke view
+            // Jika status = selesai, redirect ke view (tidak boleh edit lagi)
             if ($penilaian && $penilaian->status === 'selesai') {
                 return redirect()->route('ketua-divisi.penilaian.show', $penilaian->id)
-                    ->with('info', 'Penilaian sudah diselesaikan. Anda hanya bisa melihat.');
+                    ->with('info', 'Penilaian sudah selesai dan tidak dapat diedit.');
             }
 
             // Ambil kriteria aktif berdasarkan kategori
@@ -95,22 +122,21 @@ class PenilaianController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            // Ambil hasil penilaian sebelumnya (jika draft)
+            // Ambil hasil penilaian sebelumnya (jika draft atau menunggu verifikasi)
             $hasilPenilaian = [];
             if ($penilaian) {
                 $hasilPenilaian = HasilPenilaian::where('penilaian_id', $penilaian->id)
-                    ->pluck('skor', 'criterion_id')
-                    ->toArray();
+                    ->get()
+                    ->keyBy('criterion_id');
             }
 
             return view('ketua-divisi.penilaian.create', compact(
-                'allocation', 
-                'penilaian', 
-                'kuantitatif', 
+                'allocation',
+                'penilaian',
+                'kuantitatif',
                 'kompetensi',
                 'hasilPenilaian'
             ));
-
         } catch (\Exception $e) {
             Log::error("Penilaian Create Error: " . $e->getMessage());
             return back()->with('error', 'Gagal memuat form penilaian.');
@@ -126,8 +152,9 @@ class PenilaianController extends Controller
             $validated = $request->validate([
                 'skor' => 'required|array',
                 'skor.*' => 'required|numeric|min:1|max:5',
+                'file_penunjang.*' => 'nullable|file|mimes:pdf|max:5120',
                 'catatan' => 'nullable|string',
-                'status' => 'required|in:draft,selesai'
+                'status' => 'required|in:draft,menunggu_verifikasi'
             ]);
 
             $allocation = Allocation::where('penilai_id', Auth::id())
@@ -159,36 +186,71 @@ class PenilaianController extends Controller
                 ]
             );
 
-            // Hapus hasil penilaian lama (jika ada)
+            // Ambil hasil penilaian lama
+            $existingHasil = HasilPenilaian::where('penilaian_id', $penilaian->id)
+                ->get()
+                ->keyBy('criterion_id');
+
+            // Hapus semua hasil lama
             HasilPenilaian::where('penilaian_id', $penilaian->id)->delete();
 
             // Simpan hasil penilaian baru
             foreach ($validated['skor'] as $criterionId => $skor) {
+                $filePath = null;
+
+                if ($request->hasFile("file_penunjang.{$criterionId}")) {
+                    $file = $request->file("file_penunjang.{$criterionId}");
+                    $fileName = time() . '_' . $criterionId . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('penilaian/penunjang', $fileName, 'public');
+
+                    // Hapus file lama jika ada
+                    if (isset($existingHasil[$criterionId]) && $existingHasil[$criterionId]->file_penunjang) {
+                        Storage::delete($existingHasil[$criterionId]->file_penunjang);
+                    }
+                } elseif (isset($existingHasil[$criterionId]) && !$request->input("hapus_file.{$criterionId}", false)) {
+                    // Pertahankan file lama jika tidak dihapus
+                    $filePath = $existingHasil[$criterionId]->file_penunjang;
+                }
+
                 HasilPenilaian::create([
                     'penilaian_id' => $penilaian->id,
                     'criterion_id' => $criterionId,
-                    'skor' => $skor
+                    'skor' => $skor,
+                    'file_penunjang' => $filePath
                 ]);
             }
 
             DB::commit();
+            $penilaianId = $penilaian->id;
 
-            $message = $validated['status'] === 'selesai' 
-                ? 'Penilaian berhasil diselesaikan dan dikirim!' 
+            if ($validated['status'] === 'menunggu_verifikasi') {
+                try {
+                    LogActivity::create([
+                        'user_id' => Auth::id(),
+                        'allocation_id' => $allocationId,
+                        'penilaian_id' => $penilaianId,
+                        'action' => 'submit',
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning("Gagal simpan log aktivitas: " . $e->getMessage());
+                }
+            }
+
+            $message = $validated['status'] === 'menunggu_verifikasi'
+                ? 'Penilaian berhasil dikirim untuk verifikasi!'
                 : 'Draft penilaian berhasil disimpan!';
 
             return redirect()->route('ketua-divisi.penilaian.index')
                 ->with('success', $message);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Penilaian Store Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal menyimpan penilaian.')->withInput();
+            return back()->with('error', 'Gagal menyimpan penilaian. Silakan coba lagi.')->withInput();
         }
     }
 
     /**
-     * Show detail penilaian yang sudah selesai (UPDATED)
+     * Show detail penilaian yang sudah selesai
      */
     public function show($id)
     {
@@ -199,7 +261,7 @@ class PenilaianController extends Controller
                 'allocation.siklus'
             ])->findOrFail($id);
 
-            // Cek apakah penilaian ini milik ketua divisi yang login
+            // Cek akses
             if ($penilaian->allocation->penilai_id !== Auth::id()) {
                 abort(403, 'Unauthorized access');
             }
@@ -207,17 +269,17 @@ class PenilaianController extends Controller
             // Ambil hasil penilaian per kategori
             $hasilKuantitatif = HasilPenilaian::with('criterion')
                 ->where('penilaian_id', $id)
-                ->whereHas('criterion', function($q) {
+                ->whereHas('criterion', function ($q) {
                     $q->where('category', 'Kuantitatif')
-                      ->where('status', 1);
+                        ->where('status', 1);
                 })
                 ->get();
 
             $hasilKompetensi = HasilPenilaian::with('criterion')
                 ->where('penilaian_id', $id)
-                ->whereHas('criterion', function($q) {
+                ->whereHas('criterion', function ($q) {
                     $q->where('category', 'Kompetensi')
-                      ->where('status', 1);
+                        ->where('status', 1);
                 })
                 ->get();
 
@@ -226,11 +288,44 @@ class PenilaianController extends Controller
                 'hasilKuantitatif',
                 'hasilKompetensi'
             ));
-
         } catch (\Exception $e) {
             Log::error("Penilaian Show Error: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
             return back()->with('error', 'Gagal memuat detail penilaian.');
+        }
+    }
+
+    /**
+     * Download file penunjang
+     */
+    public function downloadFile($hasilPenilaianId)
+    {
+        try {
+            $hasil = HasilPenilaian::with('penilaian.allocation')->findOrFail($hasilPenilaianId);
+
+            // Cek akses: boleh diakses oleh PENILAI atau HRD
+            $user = Auth::user();
+
+            // Jika user adalah penilai
+            $isPenilai = $hasil->penilaian->allocation->penilai_id === $user->id;
+
+            // Jika user adalah HRD (ketua_divisi + position_id=2)
+            $isHrd = ($user->role === 'ketua_divisi' && $user->position_id == 2);
+
+            if (!$isPenilai && !$isHrd) {
+                abort(403, 'Unauthorized access');
+            }
+
+            if (
+                !$hasil->file_penunjang ||
+                !Storage::disk('public')->exists($hasil->file_penunjang)
+            ) {
+                return back()->with('error', 'File tidak ditemukan.');
+            }
+
+            return Storage::disk('public')->download($hasil->file_penunjang);
+        } catch (\Exception $e) {
+            Log::error("Download File Error: " . $e->getMessage());
+            return back()->with('error', 'Gagal mengunduh file.');
         }
     }
 }

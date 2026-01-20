@@ -12,6 +12,8 @@ use App\Http\Controllers\KetuaDivisi\PenilaianController;
 use App\Http\Controllers\KetuaDivisi\RiwayatController;
 use App\Http\Controllers\KetuaDivisi\ProfileController;
 use App\Http\Controllers\Staff\HasilPenilaianController;
+use App\Http\Controllers\Hrd\DashboardController as HrdDashboardController;
+use App\Http\Controllers\Hrd\VerifikasiController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,14 +22,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// AUTH ROUTES (Guest only)
-Route::middleware('guest')->group(function () {
-    Route::get('/auth/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/auth/login', [LoginController::class, 'login'])->name('login.process');
-
-    Route::get('/auth/register', [LoginController::class, 'showRegisterForm'])->name('register');
-    Route::post('/auth/register', [LoginController::class, 'register'])->name('register.process');
-});
+// AUTH ROUTES - Tanpa middleware guest, biar controller yang handle
+Route::get('/auth/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/auth/login', [LoginController::class, 'login'])->name('login.process');
 
 // Logout
 Route::post('/auth/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
@@ -73,6 +70,9 @@ Route::prefix('ketua-divisi')->name('ketua-divisi.')->middleware(['auth', 'role:
     Route::post('/penilaian/{allocation}/store', [PenilaianController::class, 'store'])->name('penilaian.store');
     Route::get('/penilaian/{penilaian}/show', [PenilaianController::class, 'show'])->name('penilaian.show');
 
+    Route::get('/penilaian/file/{hasilPenilaian}', [PenilaianController::class, 'downloadFile'])
+        ->name('penilaian.download-file');
+
     // Riwayat Routes
     Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat.index');
 
@@ -94,4 +94,29 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'role:staff'])->grou
     // Profile
     Route::get('/profile', [App\Http\Controllers\Staff\ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [App\Http\Controllers\Staff\ProfileController::class, 'update'])->name('profile.update');
+
 });
+
+// HRD ROUTES (Only HRD)
+Route::prefix('hrd')
+    ->name('hrd.')
+    ->middleware(['auth', 'role:ketua_divisi', 'hrd'])
+    ->group(function () {
+
+        Route::get('/dashboard', [HrdDashboardController::class, 'index'])
+            ->name('dashboard');
+
+       Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
+        Route::get('/verifikasi/{penilaian}', [VerifikasiController::class, 'show'])->name('verifikasi.show');
+        Route::post('/verifikasi/{penilaian}/verify', [VerifikasiController::class, 'verify'])->name('verifikasi.verify');
+
+        // Monitoring
+        Route::get('/monitoring', [\App\Http\Controllers\Hrd\MonitoringController::class, 'index'])
+            ->name('monitoring.index');
+
+        // Profile
+        Route::get('/profile', [\App\Http\Controllers\Hrd\ProfileController::class, 'index'])
+            ->name('profile.index');
+        Route::put('/profile', [\App\Http\Controllers\Hrd\ProfileController::class, 'update'])
+            ->name('profile.update');
+    });

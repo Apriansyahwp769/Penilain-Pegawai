@@ -1,19 +1,15 @@
 <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
-    <!-- Logo Section -->
+   
+ <!-- Logo Section -->
     <div class="p-4 lg:p-6 border-b border-gray-200">
-        <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">PM</span>
-            </div>
-            <div class="flex-1">
-                <h1 class="text-lg font-semibold text-gray-900">PETRO Muba</h1>
-                <p class="text-sm text-gray-500 hidden lg:block">Admin Panel</p>
-            </div>
+        <div class="flex items-center justify-between">
+            <img src="{{ asset('img/petromuba.png') }}" alt="PETRO Muba Logo" class="h- w-auto">
             <!-- Close Button Mobile -->
             <button class="lg:hidden p-1 text-gray-500 hover:text-gray-700">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
+        <p class="text-sm text-gray-600 mt-2 font-medium">Admin Panel</p>
     </div>
 
     <!-- Navigation Menu -->

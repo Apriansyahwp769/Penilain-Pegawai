@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    <form action="{{ route('ketua-divisi.penilaian.store', $allocation->id) }}" method="POST" id="penilaianForm">
+    <form action="{{ route('ketua-divisi.penilaian.store', $allocation->id) }}" method="POST" id="penilaianForm" enctype="multipart/form-data">
         @csrf
 
         <!-- Tabs -->
@@ -75,7 +75,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="range" 
                                        min="1" max="5" 
-                                       value="{{ $hasilPenilaian[$kriteria->id] ?? 3 }}"
+                                       value="{{ $hasilPenilaian[$kriteria->id]->skor ?? 3 }}"
                                        id="slider_{{ $kriteria->id }}"
                                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                                        oninput="updateScore(this, '{{ $kriteria->id }}')">
@@ -90,12 +90,41 @@
                             <input type="number" 
                                    id="score_{{ $kriteria->id }}" 
                                    name="skor[{{ $kriteria->id }}]"
-                                   value="{{ $hasilPenilaian[$kriteria->id] ?? 3 }}" 
+                                   value="{{ $hasilPenilaian[$kriteria->id]->skor ?? 3 }}" 
                                    min="1" max="5" 
                                    required
                                    oninput="updateSlider(this, '{{ $kriteria->id }}')"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm font-semibold">
                         </div>
+                    </div>
+
+                    <!-- File Penunjang per Kriteria -->
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <label class="block text-xs text-gray-600 mb-1">Dokumen Pendukung</label>
+                        <input type="file" 
+                               name="file_penunjang[{{ $kriteria->id }}]" 
+                               accept="application/pdf,.pdf"
+                               class="block w-full text-xs text-gray-500
+                                      file:mr-2 file:py-1 file:px-3
+                                      file:rounded file:border-0
+                                      file:text-xs file:font-medium
+                                      file:bg-blue-50 file:text-blue-700
+                                      hover:file:bg-blue-100">
+                        
+                        @if(isset($hasilPenilaian[$kriteria->id]) && $hasilPenilaian[$kriteria->id]->file_penunjang)
+                            <div class="mt-1 flex items-center text-xs text-gray-600">
+                                <span>File: {{ basename($hasilPenilaian[$kriteria->id]->file_penunjang) }}</span>
+                                <a href="{{ route('ketua-divisi.penilaian.download-file', $hasilPenilaian[$kriteria->id]->id) }}" 
+                                   class="ml-2 text-blue-600 hover:underline">Unduh</a>
+                                <label class="ml-3 flex items-center cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="hapus_file[{{ $kriteria->id }}]" 
+                                           value="1"
+                                           class="h-3 w-3 text-red-600 rounded">
+                                    <span class="ml-1 text-red-600">Hapus</span>
+                                </label>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 @empty
@@ -122,7 +151,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="range" 
                                        min="1" max="5" 
-                                       value="{{ $hasilPenilaian[$kriteria->id] ?? 3 }}"
+                                       value="{{ $hasilPenilaian[$kriteria->id]->skor ?? 3 }}"
                                        id="slider_{{ $kriteria->id }}"
                                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                                        oninput="updateScore(this, '{{ $kriteria->id }}')">
@@ -137,12 +166,41 @@
                             <input type="number" 
                                    id="score_{{ $kriteria->id }}" 
                                    name="skor[{{ $kriteria->id }}]"
-                                   value="{{ $hasilPenilaian[$kriteria->id] ?? 3 }}" 
+                                   value="{{ $hasilPenilaian[$kriteria->id]->skor ?? 3 }}" 
                                    min="1" max="5" 
                                    required
                                    oninput="updateSlider(this, '{{ $kriteria->id }}')"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm font-semibold">
                         </div>
+                    </div>
+
+                    <!-- File Penunjang per Kriteria -->
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <label class="block text-xs text-gray-600 mb-1">Dokumen Pendukung</label>
+                        <input type="file" 
+                               name="file_penunjang[{{ $kriteria->id }}]" 
+                               accept="application/pdf,.pdf"
+                               class="block w-full text-xs text-gray-500
+                                      file:mr-2 file:py-1 file:px-3
+                                      file:rounded file:border-0
+                                      file:text-xs file:font-medium
+                                      file:bg-blue-50 file:text-blue-700
+                                      hover:file:bg-blue-100">
+                        
+                        @if(isset($hasilPenilaian[$kriteria->id]) && $hasilPenilaian[$kriteria->id]->file_penunjang)
+                            <div class="mt-1 flex items-center text-xs text-gray-600">
+                                <span>File: {{ basename($hasilPenilaian[$kriteria->id]->file_penunjang) }}</span>
+                                <a href="{{ route('ketua-divisi.penilaian.download-file', $hasilPenilaian[$kriteria->id]->id) }}" 
+                                   class="ml-2 text-blue-600 hover:underline">Unduh</a>
+                                <label class="ml-3 flex items-center cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="hapus_file[{{ $kriteria->id }}]" 
+                                           value="1"
+                                           class="h-3 w-3 text-red-600 rounded">
+                                    <span class="ml-1 text-red-600">Hapus</span>
+                                </label>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 @empty
@@ -174,7 +232,7 @@
             <button type="submit" name="status" value="draft" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium transition-colors">
                 💾 Simpan Draft
             </button>
-            <button type="submit" name="status" value="selesai" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors">
+            <button type="submit" name="status" value="menunggu_verifikasi" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors">
                 ✉️ Kirim ke HRD
             </button>
         </div>
@@ -209,25 +267,21 @@
     });
 
     function switchTab(tabName) {
-        // Sembunyikan semua tab
         document.getElementById('quantitativeTab').classList.add('hidden');
         document.getElementById('competencyTab').classList.add('hidden');
         document.getElementById('feedbackTab').classList.add('hidden');
 
-        // Tampilkan tab yang dipilih
         document.getElementById(tabName + 'Tab').classList.remove('hidden');
 
-        // Update tombol aktif
         const tabs = ['quantitative', 'competency', 'feedback'];
         tabs.forEach(name => {
             const btn = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
-            if (name === tabName) {
-                btn.classList.add('bg-blue-600', 'text-white');
-                btn.classList.remove('border', 'border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
-            } else {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('border', 'border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
-            }
+            btn.classList.toggle('bg-blue-600', name === tabName);
+            btn.classList.toggle('text-white', name === tabName);
+            btn.classList.toggle('border', name !== tabName);
+            btn.classList.toggle('border-gray-300', name !== tabName);
+            btn.classList.toggle('text-gray-700', name !== tabName);
+            btn.classList.toggle('hover:bg-gray-50', name !== tabName);
         });
 
         updateProgress();
@@ -241,27 +295,18 @@
         document.getElementById('progressIndicator').textContent = `${current}/3`;
     }
 
-    // Slider → Input
     function updateScore(slider, criterionId) {
         const input = document.getElementById('score_' + criterionId);
-        if (input) {
-            input.value = slider.value;
-        }
+        if (input) input.value = slider.value;
     }
 
-    // Input → Slider
     function updateSlider(input, criterionId) {
         let value = parseInt(input.value);
-        // Validasi: pastikan nilai antara 1–5
         if (isNaN(value)) value = 3;
-        if (value < 1) value = 1;
-        if (value > 5) value = 5;
-        input.value = value; // normalize
-
+        value = Math.min(5, Math.max(1, value));
+        input.value = value;
         const slider = document.getElementById('slider_' + criterionId);
-        if (slider) {
-            slider.value = value;
-        }
+        if (slider) slider.value = value;
     }
 </script>
 @endsection

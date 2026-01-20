@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('allocation_id')->constrained('allocations')->onDelete('cascade');
             $table->decimal('skor_akhir', 5, 2)->nullable();
-            $table->enum('status', ['belum_dinilai', 'draft', 'selesai'])->default('belum_dinilai');
+            $table->enum('status', ['belum_dinilai','draft', 'menunggu_verifikasi', 'selesai'])->default('belum_dinilai');
             $table->text('catatan')->nullable();
             $table->timestamps();
         });

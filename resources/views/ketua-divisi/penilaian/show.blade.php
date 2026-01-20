@@ -115,6 +115,17 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-center text-sm font-semibold cursor-not-allowed">
                     </div>
                 </div>
+
+                <!-- File Penunjang (hanya tampil jika ada) -->
+                @if($hasil->file_penunjang)
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <a href="{{ route('ketua-divisi.penilaian.download-file', $hasil->id) }}" 
+                       class="text-xs text-blue-600 hover:underline flex items-center">
+                        <i data-lucide="file-text" class="w-3 h-3 mr-1"></i>
+                        Unduh dokumen pendukung
+                    </a>
+                </div>
+                @endif
             </div>
             @empty
             <div class="text-center py-8 text-gray-500">
@@ -156,6 +167,17 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-center text-sm font-semibold cursor-not-allowed">
                     </div>
                 </div>
+
+                <!-- File Penunjang (hanya tampil jika ada) -->
+                @if($hasil->file_penunjang)
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <a href="{{ route('ketua-divisi.penilaian.download-file', $hasil->id) }}" 
+                       class="text-xs text-blue-600 hover:underline flex items-center">
+                        <i data-lucide="file-text" class="w-3 h-3 mr-1"></i>
+                        Unduh dokumen pendukung
+                    </a>
+                </div>
+                @endif
             </div>
             @empty
             <div class="text-center py-8 text-gray-500">
@@ -206,15 +228,12 @@
     });
 
     function switchTab(tabName) {
-        // Hide all tabs
         document.getElementById('quantitativeTab').classList.add('hidden');
         document.getElementById('competencyTab').classList.add('hidden');
         document.getElementById('feedbackTab').classList.add('hidden');
 
-        // Show selected tab
         document.getElementById(tabName + 'Tab').classList.remove('hidden');
 
-        // Update active button
         ['quantitative', 'competency', 'feedback'].forEach(name => {
             const btn = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
             if (name === tabName) {
